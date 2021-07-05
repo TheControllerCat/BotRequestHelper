@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Schema;
 using System.Json;
 using BotRequestHelper.Models;
-
+using Microsoft.AspNetCore.Http;
 
 
 namespace BotRequestHelper
@@ -19,6 +19,11 @@ namespace BotRequestHelper
     [ApiController]
     public class BrhController : Controller
     {
+        //==================================================
+        // Class Scope Variables
+        //==================================================
+
+        private readonly int debugFlag = 0; // +++++DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
 
         //==================================================
         // Generate Random Test Coords
@@ -66,10 +71,16 @@ namespace BotRequestHelper
 
         private string FormatResponse(int RobotId, double DistanceToGoal, int BatteryLevel)
         {
-            return "{\"robotId\":\"" + RobotId.ToString()
+            string returnVal = "{\"robotId\":\"" + RobotId.ToString()
                             + "\",\"distanceToGoal\":\"" + DistanceToGoal.ToString()
                             + "\",\"batteryLevel\":\"" + BatteryLevel.ToString()
-                            + "\"}"; //\r
+                            + "\"}";
+            if (debugFlag == 1)
+            {
+                returnVal += "\r";
+            }
+
+            return returnVal;
         }
 
         //==================================================
@@ -79,6 +90,22 @@ namespace BotRequestHelper
         private double CalcRobotDist(int x1, int x2, int y1, int y2)
         {
             var returnVal = Math.Round(Math.Sqrt((Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2))), 2);
+
+            return returnVal;
+        }
+
+        //==================================================
+        // Parse Input
+        //==================================================
+
+        private int ParseRequestInput(string psFieldName)
+        {
+            int returnVal = 0;
+
+            if (HttpContext.Request.Query["" + psFieldName + ""].ToString() != "")
+            {
+                returnVal = Convert.ToInt32(HttpContext.Request.Query["" + psFieldName + ""].ToString());
+            }
 
             return returnVal;
         }
@@ -96,8 +123,6 @@ namespace BotRequestHelper
             // Local Variables
             //------------------------------------------------------------
 
-            int debugFlag = 0;
-
             int loadId; //Arbitrary ID of the load which needs to be moved.
             int loadX; //Current x coordinate of the load which needs to be moved.
             int loadY; //Current y coordinate of the load which needs to be moved.
@@ -110,9 +135,23 @@ namespace BotRequestHelper
             // Request Input
             //------------------------------------------------------------
 
-            loadId = 231;
-            loadX = GetRandCoord(); //5;
-            loadY = GetRandCoord(); //3; 
+            if (debugFlag == 1)
+            {
+                loadId = 231;
+                loadX = GetRandCoord();
+                loadY = GetRandCoord();
+
+                ReturnVal += "loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "\r";
+            }
+            else
+            {
+
+                loadId = ParseRequestInput("loadId");
+                loadX = ParseRequestInput("x");
+                loadY = ParseRequestInput("y");
+            }
+
+            
 
             //------------------------------------------------------------
             // Query List of Robots
@@ -261,6 +300,9 @@ namespace BotRequestHelper
             //------------------------------------------------------------
 
             ReturnVal = "["+ ReturnVal + "]";
+
+            if (!ValidateJson(ReturnVal))
+            { ReturnVal += " ERROR INVALID JSON!"; }
 
             return Ok(""+ ReturnVal + "");
 
