@@ -24,6 +24,7 @@ namespace BotRequestHelper
         //==================================================
 
         private readonly int debugFlag = 0; // +++++DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
+        private readonly int closeRangeDist = 10;
 
         //==================================================
         // Generate Random Test Coords
@@ -66,7 +67,7 @@ namespace BotRequestHelper
         }
 
         //==================================================
-        // Format Ourput
+        // Format Output
         //==================================================
 
         private string FormatResponse(int RobotId, double DistanceToGoal, int BatteryLevel)
@@ -111,51 +112,12 @@ namespace BotRequestHelper
         }
 
         //==================================================
-        // Do the Work
+        // Query List of Robots
         //==================================================
 
-        // GET: /<controller>/
-        [HttpGet]
-        public IActionResult Get()
+        private string getRobotsRaw()
         {
-
-            //------------------------------------------------------------
-            // Local Variables
-            //------------------------------------------------------------
-
-            int loadId; //Arbitrary ID of the load which needs to be moved.
-            int loadX; //Current x coordinate of the load which needs to be moved.
-            int loadY; //Current y coordinate of the load which needs to be moved.
-
-            string ReturnVal = "";
-            //string TempVal = "";
-            string RawJsonString = "";
-
-            //------------------------------------------------------------
-            // Request Input
-            //------------------------------------------------------------
-
-            if (debugFlag == 1)
-            {
-                loadId = 231;
-                loadX = GetRandCoord();
-                loadY = GetRandCoord();
-
-                ReturnVal += "loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "\r";
-            }
-            else
-            {
-
-                loadId = ParseRequestInput("loadId");
-                loadX = ParseRequestInput("x");
-                loadY = ParseRequestInput("y");
-            }
-
-            
-
-            //------------------------------------------------------------
-            // Query List of Robots
-            //------------------------------------------------------------
+            string returnVal = "";
 
             // Create a request for the URL.
             WebRequest request = WebRequest.Create(
@@ -178,7 +140,7 @@ namespace BotRequestHelper
                 string responseFromServer = reader.ReadToEnd();
                 // Display the content.
 
-                RawJsonString = responseFromServer;
+                returnVal = responseFromServer;
             }
 
             // Close the response.
@@ -188,63 +150,209 @@ namespace BotRequestHelper
             // Test if Robots JSON is valid.
             //------------------------------------------------------------
 
+            if (!ValidateJson(returnVal))
+            { returnVal += " ERROR INVALID JSON!"; }
 
-            if (!ValidateJson(RawJsonString))
-            { ReturnVal += " ERROR INVALID JSON!"; }
+            return returnVal;
+        }
 
-            /*
-                try
-                {
-                    var tempObj = JsonValue.Parse(RawJsonString);
-                    //ReturnVal = RawJsonString;
-                }
-                catch (FormatException fex)
-                {
-                    ReturnVal = "" + " ERROR INVALID " + fex;
-                }
-                catch (Exception ex) //some other exception
-                {
-                    ReturnVal = "" + " ERROR OTHER " + ex;
-                }
-            */
+        //==================================================
+        // Main Body
+        //==================================================
+
+        private string HelpRobots(int psLoadId, int psLoadX, int psLoadY)
+        {
+            string returnVal = "";
+
+            //------------------------------------------------------------
+            // Query JSON List of Robots
+            //------------------------------------------------------------
+
+            string RawJsonString = getRobotsRaw();
 
             //------------------------------------------------------------
             // Convert Raw JSON string to Object
             //------------------------------------------------------------
 
             // Convert raw text Json into List of Robot objects
-            //var details = JsonValue.Parse(RawJsonString);
             var tempJsonObj = JsonConvert.DeserializeObject<List<Robot>>(RawJsonString);
 
-            int tempCount = 0;
-            double tempDist = 0;
-
+            // Set up the empty RobotClientResponse Struct List
             List<RobotClientResponse> listRobotClientResponse = new List<RobotClientResponse>();
 
             //------------------------------------------------------------
             // Loop Through the Available Robots Into A List
             //------------------------------------------------------------
 
+            // Manual counter for debugging.
+            int tempCount = 0;
+
+            //Loop through List of Robot Objects that contains the Robot Json feed.
             foreach (var e in tempJsonObj)
             {
-
                 tempCount++;
-                tempDist = CalcRobotDist(e.X, loadX, e.Y, loadY);
 
+                // Set up a single instance of the RobotClientResponse Struct.
                 var tempRCR = new RobotClientResponse();
 
+                // Populate from the Robots List current item
                 tempRCR.RobotId = e.RobotId;
-                tempRCR.DistanceToGoal = tempDist;
+                tempRCR.DistanceToGoal = CalcRobotDist(e.X, psLoadX, e.Y, psLoadY);
                 tempRCR.BatteryLevel = e.BatteryLevel;
                 tempRCR.Count = tempCount;
 
-
+                // Add current item to the RobotClientResponse list.
                 listRobotClientResponse.Add(tempRCR);
-                
             }
 
             //------------------------------------------------------------
-            // List By Distance, for testing and debugging
+            // Outputs All Robots Ordered By Distance, for testing and debugging
+            //------------------------------------------------------------
+
+            if (debugFlag == 1)
+            {
+                var allRobotsByRange = from s in listRobotClientResponse
+                                       orderby s.DistanceToGoal
+                                       select s;
+
+                foreach (var rbr in allRobotsByRange)
+                {
+                    returnVal += "(RBR)" + FormatResponse(rbr.RobotId, rbr.DistanceToGoal, rbr.BatteryLevel) + "\r";
+                }
+
+                returnVal += "========================================\r";
+            }
+
+            //------------------------------------------------------------
+            // Get IDs Of Robots In Range With Battery Reserve
+            //------------------------------------------------------------
+
+            // Get the closest robots under closeRangeDist (default to 10) units ordered by highest battery level.
+            var checkDistInRange = from s in listRobotClientResponse
+                                   where s.DistanceToGoal <= closeRangeDist
+                                   orderby s.BatteryLevel descending
+                                   select s;
+
+            if (checkDistInRange.Count() > 1)
+            {
+                // If at least one Bobot within closeRangeDist (default to 10), get the ID with highest battery reserve.
+                var searchDistInRange = (from s in listRobotClientResponse
+                                         where s.DistanceToGoal <= closeRangeDist
+                                         orderby s.BatteryLevel descending
+                                         select s).FirstOrDefault();
+
+                // Add Result to the collection.
+                returnVal += "" + FormatResponse(searchDistInRange.RobotId, searchDistInRange.DistanceToGoal, searchDistInRange.BatteryLevel);
+            }
+            else
+            {
+                // if no Robots are within closeRangeDist distance (default to 10), get ID of closest first available.
+                var searchMinDist = listRobotClientResponse.OrderBy(i => i.DistanceToGoal).FirstOrDefault();
+
+                // Add Result to the collection.
+                returnVal += "" + FormatResponse(searchMinDist.RobotId, searchMinDist.DistanceToGoal, searchMinDist.BatteryLevel);
+            }
+
+
+            //------------------------------------------------------------
+            // Output to Client
+            //------------------------------------------------------------
+
+            // Format for API Endpoint JSON.
+            returnVal = "[" + returnVal + "]";
+
+            // Final JSON validation of collection.
+            if (!ValidateJson(returnVal))
+            { returnVal += " ERROR INVALID JSON!"; }
+
+
+            return returnVal;
+        }
+
+        //==================================================
+        // Do the Work With A Get Request
+        //==================================================
+
+        // GET: /<controller>/
+        [HttpGet]
+        public IActionResult Get()
+        {
+
+            //------------------------------------------------------------
+            // Local Variables
+            //------------------------------------------------------------
+
+            int loadId; //Arbitrary ID of the load which needs to be moved.
+            int loadX; //Current x coordinate of the load which needs to be moved.
+            int loadY; //Current y coordinate of the load which needs to be moved.
+
+            string ReturnVal = ""; //The string dump for the output collection.
+
+            //------------------------------------------------------------
+            // Request Input
+            //------------------------------------------------------------
+
+            if (debugFlag == 1)
+            {
+                // Get Random integers for the coordinate testing.
+                loadId = 231;
+                loadX = GetRandCoord();
+                loadY = GetRandCoord();
+
+                ReturnVal += "loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "\r";
+            }
+            else
+            {
+                // Parse and Validate the client request input.
+                loadId = ParseRequestInput("loadId");
+                loadX = ParseRequestInput("x");
+                loadY = ParseRequestInput("y");
+            }
+
+            /*
+            //------------------------------------------------------------
+            // Query JSON List of Robots
+            //------------------------------------------------------------
+
+            string RawJsonString = getRobotsRaw();
+
+            //------------------------------------------------------------
+            // Convert Raw JSON string to Object
+            //------------------------------------------------------------
+
+            // Convert raw text Json into List of Robot objects
+            var tempJsonObj = JsonConvert.DeserializeObject<List<Robot>>(RawJsonString);
+
+            // Set up the empty RobotClientResponse Struct List
+            List<RobotClientResponse> listRobotClientResponse = new List<RobotClientResponse>();
+
+            //------------------------------------------------------------
+            // Loop Through the Available Robots Into A List
+            //------------------------------------------------------------
+
+            // Manual counter for debugging.
+            int tempCount = 0;
+
+            //Loop through List of Robot Objects that contains the Robot Json feed.
+            foreach (var e in tempJsonObj)
+            {
+                tempCount++;
+
+                // Set up a single instance of the RobotClientResponse Struct.
+                var tempRCR = new RobotClientResponse();
+
+                    // Populate from the Robots List current item
+                    tempRCR.RobotId = e.RobotId;
+                    tempRCR.DistanceToGoal = CalcRobotDist(e.X, loadX, e.Y, loadY);
+                    tempRCR.BatteryLevel = e.BatteryLevel;
+                    tempRCR.Count = tempCount;
+
+                // Add current item to the RobotClientResponse list.
+                listRobotClientResponse.Add(tempRCR);
+            }
+
+            //------------------------------------------------------------
+            // Outputs All Robots Ordered By Distance, for testing and debugging
             //------------------------------------------------------------
 
             if (debugFlag == 1)
@@ -259,14 +367,11 @@ namespace BotRequestHelper
                 }
 
                 ReturnVal += "========================================\r";
-
             }
 
             //------------------------------------------------------------
             // Get IDs Of Robots In Range With Battery Reserve
             //------------------------------------------------------------
-
-            int closeRangeDist = 10;
 
             // Get the closest robots under closeRangeDist (default to 10) units ordered by highest battery level.
             var checkDistInRange = from s in listRobotClientResponse
@@ -276,22 +381,22 @@ namespace BotRequestHelper
 
             if (checkDistInRange.Count() > 1)
             {
-                // If at least one Bobot within 10 distance, get the ID with highest battery reserve.
+                // If at least one Bobot within closeRangeDist (default to 10), get the ID with highest battery reserve.
                 var searchDistInRange = (from s in listRobotClientResponse
                                          where s.DistanceToGoal <= closeRangeDist
                                          orderby s.BatteryLevel descending
                                          select s).FirstOrDefault();
 
+                // Add Result to the collection.
                 ReturnVal += "" + FormatResponse(searchDistInRange.RobotId, searchDistInRange.DistanceToGoal, searchDistInRange.BatteryLevel);
-
             }
             else
             {
-                // if no Robots are within closeRangeDist distance, get ID of closest first available.
+                // if no Robots are within closeRangeDist distance (default to 10), get ID of closest first available.
                 var searchMinDist = listRobotClientResponse.OrderBy(i => i.DistanceToGoal).FirstOrDefault();
 
+                // Add Result to the collection.
                 ReturnVal += "" + FormatResponse(searchMinDist.RobotId, searchMinDist.DistanceToGoal, searchMinDist.BatteryLevel);
-
             }
 
 
@@ -299,14 +404,21 @@ namespace BotRequestHelper
             // Output to Client
             //------------------------------------------------------------
 
+            // Format for API Endpoint JSON.
             ReturnVal = "["+ ReturnVal + "]";
 
+            // Final JSON validation of collection.
             if (!ValidateJson(ReturnVal))
             { ReturnVal += " ERROR INVALID JSON!"; }
 
+            // Return collection to client request.
             return Ok(""+ ReturnVal + "");
+            */
 
+            
+            return Ok("" + HelpRobots(loadId, loadX, loadY) + "");
 
+            // End Of Line.
         }
     }
 
