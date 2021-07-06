@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.IO;
-//using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-//using Newtonsoft.Json.Schema;
 using System.Json;
 using BotRequestHelper.Models;
 using Microsoft.AspNetCore.Http;
@@ -23,8 +21,9 @@ namespace BotRequestHelper
         // Class Scope Variables
         //==================================================
 
-        private readonly int debugFlag = 0; // +++++DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
-        private readonly int closeRangeDist = 10;
+        private readonly int debugFlag = 0; // +++++ DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
+        private readonly int closeRangeDist = 10; // Robot close range distance.
+        private readonly string robotsApiUrl = "https://60c8ed887dafc90017ffbd56.mockapi.io/robots";
 
         //==================================================
         // Generate Random Test Coords
@@ -33,11 +32,12 @@ namespace BotRequestHelper
         private int GetRandCoord()
         {
             int returnVal = 0;
-
             Random rnd = new Random();
 
+            // Get a random integer value between 1 and 100 for testing.
             returnVal = rnd.Next(1, 100);
 
+            // Return test integer.
             return returnVal;
         }
 
@@ -49,6 +49,7 @@ namespace BotRequestHelper
         {
             bool returnVal = false;
 
+            // Parse a string of JSON data to make sure it's formatted correctly.
             try
             {
                 var tempObj = JsonValue.Parse(psJsonString);
@@ -63,6 +64,7 @@ namespace BotRequestHelper
                 returnVal = false;
             }
 
+            // Return T or F.
             return returnVal;
         }
 
@@ -72,6 +74,7 @@ namespace BotRequestHelper
 
         private string FormatResponse(int RobotId, double DistanceToGoal, int BatteryLevel)
         {
+            // Add JSON furniture for item formatting.
             string returnVal = "{\"robotId\":\"" + RobotId.ToString()
                             + "\",\"distanceToGoal\":\"" + DistanceToGoal.ToString()
                             + "\",\"batteryLevel\":\"" + BatteryLevel.ToString()
@@ -81,6 +84,7 @@ namespace BotRequestHelper
                 returnVal += "\r";
             }
 
+            // Return formatted JSON item.
             return returnVal;
         }
 
@@ -90,21 +94,27 @@ namespace BotRequestHelper
 
         private double CalcRobotDist(int x1, int x2, int y1, int y2)
         {
+            // Calculate distance formula.
             var returnVal = Math.Round(Math.Sqrt((Math.Pow(x1 - x2, 2) + Math.Pow(y1 - y2, 2))), 2);
 
+            // Return calculated distance.
             return returnVal;
         }
 
         //==================================================
-        // Parse Form Input
+        // Parse GET Form Input
         //==================================================
 
         private int ParseFormRequestInput(string psFieldName)
         {
-            int returnVal = 0;
+            int returnVal = -999;
 
+            // Used for GET requests.
+            /*
+            //Check that client input isn't an empty string.
             if (HttpContext.Request.Query["" + psFieldName + ""].ToString() != "")
             {
+                //Check and client input is formatted as a valid integer.
                 if (int.TryParse(HttpContext.Request.Query["" + psFieldName + ""].ToString(), out int n))
                 {
                     returnVal = Convert.ToInt32(HttpContext.Request.Query["" + psFieldName + ""].ToString());
@@ -114,7 +124,24 @@ namespace BotRequestHelper
                     returnVal = -999;
                 }
             }
+            */
 
+            // Used for POST requests.
+            //Check that client form input isn't an empty string.
+            if (HttpContext.Request.Form["" + psFieldName + ""].ToString() != "")
+            {
+                //Check and client form input is formatted as a valid integer.
+                if (int.TryParse(HttpContext.Request.Form["" + psFieldName + ""].ToString(), out int n))
+                {
+                    // Check that client form input is greater than zero. 
+                    if (Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString()) > 0)
+                    {
+                        returnVal = Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString());
+                    }
+                }
+            }
+
+            // Return parsed client input.
             return returnVal;
         }
 
@@ -122,20 +149,18 @@ namespace BotRequestHelper
         // Query List of Robots
         //==================================================
 
-        private string getRobotsRaw()
+        private string GetRobotsRaw()
         {
             string returnVal = "";
 
             // Create a request for the URL.
-            WebRequest request = WebRequest.Create(
-              "https://60c8ed887dafc90017ffbd56.mockapi.io/robots");
+            WebRequest request = WebRequest.Create(robotsApiUrl);
+
             // If required by the server, set the credentials.
             request.Credentials = CredentialCache.DefaultCredentials;
 
             // Get the response.
             WebResponse response = request.GetResponse();
-            // Display the status.
-            //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
 
             // Get the stream containing content returned by the server.
             // The using block ensures the stream is automatically closed.
@@ -145,21 +170,18 @@ namespace BotRequestHelper
                 StreamReader reader = new StreamReader(dataStream);
                 // Read the content.
                 string responseFromServer = reader.ReadToEnd();
-                // Display the content.
-
+                // Add content to local collection.
                 returnVal = responseFromServer;
             }
 
             // Close the response.
             response.Close();
 
-            //------------------------------------------------------------
             // Test if Robots JSON is valid.
-            //------------------------------------------------------------
-
             if (!ValidateJson(returnVal))
             { returnVal += " ERROR INVALID JSON!"; }
 
+            // Return collection of rwa JSON String data.
             return returnVal;
         }
 
@@ -169,13 +191,14 @@ namespace BotRequestHelper
 
         private string SearchRobots(int psLoadX, int psLoadY)
         {
-            string returnVal = "";
+            string returnVal = ""; // Collection for output.
+            int tempCount = 0; // Manual counter for debugging.
 
             //------------------------------------------------------------
             // Query JSON List of Robots
             //------------------------------------------------------------
 
-            string RawJsonString = getRobotsRaw();
+            string RawJsonString = GetRobotsRaw();
 
             //------------------------------------------------------------
             // Convert Raw JSON string to Object
@@ -190,9 +213,6 @@ namespace BotRequestHelper
             //------------------------------------------------------------
             // Loop Through the Available Robots Into A List
             //------------------------------------------------------------
-
-            // Manual counter for debugging.
-            int tempCount = 0;
 
             //Loop through List of Robot Objects that contains the Robot Json feed.
             foreach (var e in tempJsonObj)
@@ -260,6 +280,10 @@ namespace BotRequestHelper
                 returnVal += "" + FormatResponse(searchMinDist.RobotId, searchMinDist.DistanceToGoal, searchMinDist.BatteryLevel);
             }
 
+            //------------------------------------------------------------
+            // Return collection.
+            //------------------------------------------------------------
+
             return returnVal;
         }
 
@@ -274,7 +298,7 @@ namespace BotRequestHelper
             // Local Variables
             //------------------------------------------------------------
 
-            string returnVal = ""; //The string dump for the output collection.
+            string returnVal = ""; //The string for the output collection.
 
             int loadId; //Arbitrary ID of the load which needs to be moved.
             int loadX; //Current x coordinate of the load which needs to be moved.
@@ -287,15 +311,23 @@ namespace BotRequestHelper
             if (debugFlag == 1)
             {
                 // Get Random integers for the coordinate testing.
-                loadId = 231;
+                
+                loadId = GetRandCoord() + GetRandCoord();
                 loadX = GetRandCoord();
                 loadY = GetRandCoord();
 
-                returnVal += "loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "\r";
+                /*
+                loadId = ParseFormRequestInput("loadId");
+                loadX = ParseFormRequestInput("x");
+                loadY = ParseFormRequestInput("y");
+                */
+
+                returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
             }
             else
             {
                 // Parse and Validate the client request input.
+
                 loadId = ParseFormRequestInput("loadId");
                 loadX = ParseFormRequestInput("x");
                 loadY = ParseFormRequestInput("y");
@@ -326,9 +358,18 @@ namespace BotRequestHelper
 
             // Final JSON validation of collection.
             if (!ValidateJson(returnVal))
-            { returnVal += " ERROR INVALID JSON!"; }
+            {
+                if (debugFlag == 1)
+                {
+                    returnVal += " ERROR INVALID JSON!";
+                }
+                else
+                {
+                    returnVal = "[" + FormatResponse(-999, -999, -999) + "]";
+                }
+            }
 
-
+            // Return collection for client response.
             return returnVal;
         }
 
