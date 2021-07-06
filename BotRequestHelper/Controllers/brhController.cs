@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System.Json;
 using BotRequestHelper.Models;
 using Microsoft.AspNetCore.Http;
+using BotRequestHelper.TestData;
 
 
 namespace BotRequestHelper
@@ -23,7 +24,8 @@ namespace BotRequestHelper
 
         private readonly int debugFlag = 0; // +++++ DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
         private readonly int closeRangeDist = 10; // Robot close range distance.
-        private readonly string robotsApiUrl = "https://60c8ed887dafc90017ffbd56.mockapi.io/robots";
+        private readonly string robotsApiUrl = "https://svtrobotics.free.beeceptor.com/robots";
+        //private readonly string robotsApiUrl = "https://60c8ed887dafc90017ffbd56.mockapi.io/robots";
 
         //==================================================
         // Generate Random Test Coords
@@ -102,7 +104,7 @@ namespace BotRequestHelper
         }
 
         //==================================================
-        // Parse GET Form Input
+        // Parse Form Input
         //==================================================
 
         private int ParseFormRequestInput(string psFieldName)
@@ -126,21 +128,25 @@ namespace BotRequestHelper
             }
             */
 
-            // Used for POST requests.
-            //Check that client form input isn't an empty string.
-            if (HttpContext.Request.Form["" + psFieldName + ""].ToString() != "")
+            if (HttpContext.Request.Form["" + psFieldName + ""].Count > 0)
             {
-                //Check and client form input is formatted as a valid integer.
-                if (int.TryParse(HttpContext.Request.Form["" + psFieldName + ""].ToString(), out int n))
+
+                // Used for POST requests.
+                //Check that client form input isn't an empty string.
+                if (HttpContext.Request.Form["" + psFieldName + ""].ToString() != "")
                 {
-                    // Check that client form input is greater than zero. 
-                    if (Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString()) > 0)
+                    //Check and client form input is formatted as a valid integer.
+                    if (int.TryParse(HttpContext.Request.Form["" + psFieldName + ""].ToString(), out int n))
                     {
-                        returnVal = Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString());
+                        // Check that client form input is greater than zero. 
+                        if (Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString()) > 0)
+                        {
+                            returnVal = Convert.ToInt32(HttpContext.Request.Form["" + psFieldName + ""].ToString());
+                        }
                     }
                 }
-            }
 
+            }
             // Return parsed client input.
             return returnVal;
         }
@@ -153,30 +159,39 @@ namespace BotRequestHelper
         {
             string returnVal = "";
 
-            // Create a request for the URL.
-            WebRequest request = WebRequest.Create(robotsApiUrl);
-
-            // If required by the server, set the credentials.
-            request.Credentials = CredentialCache.DefaultCredentials;
-
-            // Get the response.
-            WebResponse response = request.GetResponse();
-
-            // Get the stream containing content returned by the server.
-            // The using block ensures the stream is automatically closed.
-            using (Stream dataStream = response.GetResponseStream())
+            // Ping the Robots list API for available Robots.
+            try
             {
-                // Open the stream using a StreamReader for easy access.
-                StreamReader reader = new StreamReader(dataStream);
-                // Read the content.
-                string responseFromServer = reader.ReadToEnd();
-                // Add content to local collection.
-                returnVal = responseFromServer;
+                // Create a request for the URL.
+                WebRequest request = WebRequest.Create(robotsApiUrl);
+
+                // If required by the server, set the credentials.
+                request.Credentials = CredentialCache.DefaultCredentials;
+
+                // Get the response.
+                WebResponse response = request.GetResponse();
+
+                // Get the stream containing content returned by the server.
+                // The using block ensures the stream is automatically closed.
+                using (Stream dataStream = response.GetResponseStream())
+                {
+                    // Open the stream using a StreamReader for easy access.
+                    StreamReader reader = new StreamReader(dataStream);
+                    // Read the content.
+                    string responseFromServer = reader.ReadToEnd();
+                    // Add content to local collection.
+                    returnVal = responseFromServer;
+                }
+
+                // Close the response.
+                response.Close();
             }
-
-            // Close the response.
-            response.Close();
-
+            catch
+            {
+                // If the Robots API is unavailable, pull Robots list from backup data.
+                var tempTestData = new TestDataClass();
+                returnVal = tempTestData.GetTestDataBots();
+            }
             // Test if Robots JSON is valid.
             if (!ValidateJson(returnVal))
             { returnVal += " ERROR INVALID JSON!"; }
@@ -300,9 +315,9 @@ namespace BotRequestHelper
 
             string returnVal = ""; //The string for the output collection.
 
-            int loadId; //Arbitrary ID of the load which needs to be moved.
-            int loadX; //Current x coordinate of the load which needs to be moved.
-            int loadY; //Current y coordinate of the load which needs to be moved.
+            int loadId = -999; //Arbitrary ID of the load which needs to be moved.
+            int loadX = -999; //Current x coordinate of the load which needs to be moved.
+            int loadY = -999; //Current y coordinate of the load which needs to be moved.
 
             //------------------------------------------------------------
             // Request Input
@@ -316,21 +331,24 @@ namespace BotRequestHelper
                 loadX = GetRandCoord();
                 loadY = GetRandCoord();
                 */
-                
-                loadId = ParseFormRequestInput("loadId");
-                loadX = ParseFormRequestInput("x");
-                loadY = ParseFormRequestInput("y");
-                
+
+                if (HttpContext.Request.Form != null)
+                {
+                    loadId = ParseFormRequestInput("loadId");
+                    loadX = ParseFormRequestInput("x");
+                    loadY = ParseFormRequestInput("y");
+                }
+
 
                 returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
             }
             else
             {
                 // Parse and Validate the client request input.
-
                 loadId = ParseFormRequestInput("loadId");
                 loadX = ParseFormRequestInput("x");
                 loadY = ParseFormRequestInput("y");
+
             }
 
             //------------------------------------------------------------

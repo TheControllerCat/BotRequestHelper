@@ -11,6 +11,7 @@
     <None Remove="Models\" />
     <None Remove="System.Json" />
     <None Remove="Newtonsoft.Json.Schema" />
+    <None Remove="TestData\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -20,5 +21,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
+    <Folder Include="TestData\" />
   </ItemGroup>
 </Project>
