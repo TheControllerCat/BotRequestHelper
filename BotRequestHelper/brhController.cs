@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.IO;
-using Newtonsoft.Json.Linq;
+//using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
+//using Newtonsoft.Json.Schema;
 using System.Json;
 using BotRequestHelper.Models;
 using Microsoft.AspNetCore.Http;
@@ -316,98 +316,6 @@ namespace BotRequestHelper
                 // If input appears valid, run the Robot Search.
                 returnVal += SearchRobots(loadX, loadY);
             }
-
-
-            /*
-            //------------------------------------------------------------
-            // Query JSON List of Robots
-            //------------------------------------------------------------
-
-            string RawJsonString = getRobotsRaw();
-
-            //------------------------------------------------------------
-            // Convert Raw JSON string to Object
-            //------------------------------------------------------------
-
-            // Convert raw text Json into List of Robot objects
-            var tempJsonObj = JsonConvert.DeserializeObject<List<Robot>>(RawJsonString);
-
-            // Set up the empty RobotClientResponse Struct List
-            List<RobotClientResponse> listRobotClientResponse = new List<RobotClientResponse>();
-
-            //------------------------------------------------------------
-            // Loop Through the Available Robots Into A List
-            //------------------------------------------------------------
-
-            // Manual counter for debugging.
-            int tempCount = 0;
-
-            //Loop through List of Robot Objects that contains the Robot Json feed.
-            foreach (var e in tempJsonObj)
-            {
-                tempCount++;
-
-                // Set up a single instance of the RobotClientResponse Struct.
-                var tempRCR = new RobotClientResponse();
-
-                // Populate from the Robots List current item
-                tempRCR.RobotId = e.RobotId;
-                tempRCR.DistanceToGoal = CalcRobotDist(e.X, loadX, e.Y, loadY);
-                tempRCR.BatteryLevel = e.BatteryLevel;
-                tempRCR.Count = tempCount;
-
-                // Add current item to the RobotClientResponse list.
-                listRobotClientResponse.Add(tempRCR);
-            }
-
-            //------------------------------------------------------------
-            // Outputs All Robots Ordered By Distance, for testing and debugging
-            //------------------------------------------------------------
-
-            if (debugFlag == 1)
-            {
-                var allRobotsByRange = from s in listRobotClientResponse
-                                       orderby s.DistanceToGoal
-                                       select s;
-
-                foreach (var rbr in allRobotsByRange)
-                {
-                    returnVal += "(RBR)" + FormatResponse(rbr.RobotId, rbr.DistanceToGoal, rbr.BatteryLevel) + "\r";
-                }
-
-                returnVal += "========================================\r";
-            }
-
-            //------------------------------------------------------------
-            // Get IDs Of Robots In Range With Battery Reserve
-            //------------------------------------------------------------
-
-            // Get the closest robots under closeRangeDist (default to 10) units ordered by highest battery level.
-            var checkDistInRange = from s in listRobotClientResponse
-                                   where s.DistanceToGoal <= closeRangeDist
-                                   orderby s.BatteryLevel descending
-                                   select s;
-
-            if (checkDistInRange.Count() > 1)
-            {
-                // If at least one Bobot within closeRangeDist (default to 10), get the ID with highest battery reserve.
-                var searchDistInRange = (from s in listRobotClientResponse
-                                         where s.DistanceToGoal <= closeRangeDist
-                                         orderby s.BatteryLevel descending
-                                         select s).FirstOrDefault();
-
-                // Add Result to the collection.
-                returnVal += "" + FormatResponse(searchDistInRange.RobotId, searchDistInRange.DistanceToGoal, searchDistInRange.BatteryLevel);
-            }
-            else
-            {
-                // if no Robots are within closeRangeDist distance (default to 10), get ID of closest first available.
-                var searchMinDist = listRobotClientResponse.OrderBy(i => i.DistanceToGoal).FirstOrDefault();
-
-                // Add Result to the collection.
-                returnVal += "" + FormatResponse(searchMinDist.RobotId, searchMinDist.DistanceToGoal, searchMinDist.BatteryLevel);
-            }
-            */
 
             //------------------------------------------------------------
             // Output to Client
