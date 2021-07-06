@@ -311,16 +311,16 @@ namespace BotRequestHelper
             if (debugFlag == 1)
             {
                 // Get Random integers for the coordinate testing.
-                
+                /*
                 loadId = GetRandCoord() + GetRandCoord();
                 loadX = GetRandCoord();
                 loadY = GetRandCoord();
-
-                /*
+                */
+                
                 loadId = ParseFormRequestInput("loadId");
                 loadX = ParseFormRequestInput("x");
                 loadY = ParseFormRequestInput("y");
-                */
+                
 
                 returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
             }
