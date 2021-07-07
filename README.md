@@ -3,6 +3,8 @@ API to help manage bot location, distance and pickups.
 
 *The **master** branch is the primary default build branch.*
 
+Archive can be downloaded from the [**BotRequestHelper.zip**](https://github.com/TheControllerCat/BotRequestHelper/raw/master/BotRequestHelper.zip) file.
+
 ## Requirements
 *   [*.NET Core API with a POST endpoint that accepts and returns data per the above task description.*](#req01)
 *   [*API can be run locally and tested using Postman or other similar tools.*](#req02)
