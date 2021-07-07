@@ -24,8 +24,8 @@ namespace BotRequestHelper
 
         private readonly int debugFlag = 0; // +++++ DEBUG DEV FLAG, 1=TRUE, 0=FALSE +++++
         private readonly int closeRangeDist = 10; // Robot close range distance.
-        private readonly string robotsApiUrl = "https://svtrobotics.free.beeceptor.com/robots";
-        //private readonly string robotsApiUrl = "https://60c8ed887dafc90017ffbd56.mockapi.io/robots";
+        //private readonly string robotsApiUrl = "https://svtrobotics.free.beeceptor.com/robots";
+        private readonly string robotsApiUrl = "https://60c8ed887dafc90017ffbd56.mockapi.io/robots";
 
         //==================================================
         // Generate Random Test Coords
@@ -339,10 +339,6 @@ namespace BotRequestHelper
                 loadX = GetRandCoord();
                 loadY = GetRandCoord();
 
-
-                returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
-                returnVal += ""+psRequestPayloadJson+"\r";
-
                 //string tempRequestPayloadJson = psRequestPayloadJson.Substring(1, psRequestPayloadJson.Length - 2);
                 //returnVal += "" + tempRequestPayloadJson + "\r";
 
@@ -376,6 +372,9 @@ namespace BotRequestHelper
                     }
 
                 }
+
+                returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
+                returnVal += "" + psRequestPayloadJson + "\r";
 
             }
             else
