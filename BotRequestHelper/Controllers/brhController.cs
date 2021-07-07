@@ -10,7 +10,7 @@ using System.Json;
 using BotRequestHelper.Models;
 using Microsoft.AspNetCore.Http;
 using BotRequestHelper.TestData;
-
+using System.Text;
 
 namespace BotRequestHelper
 {
@@ -128,6 +128,8 @@ namespace BotRequestHelper
             }
             */
 
+
+            /*
             if (HttpContext.Request.Form["" + psFieldName + ""].Count > 0)
             {
 
@@ -147,6 +149,10 @@ namespace BotRequestHelper
                 }
 
             }
+            */
+
+  
+
             // Return parsed client input.
             return returnVal;
         }
@@ -306,7 +312,7 @@ namespace BotRequestHelper
         // Main Body
         //==================================================
 
-        private string HelpRobots()
+        private string HelpRobots(string psRequestPayloadJson)
         {
 
             //------------------------------------------------------------
@@ -323,32 +329,95 @@ namespace BotRequestHelper
             // Request Input
             //------------------------------------------------------------
 
+            var tempJsonObj = new List<RequestPayload>();
+
             if (debugFlag == 1)
             {
                 // Get Random integers for the coordinate testing.
-                /*
+
                 loadId = GetRandCoord() + GetRandCoord();
                 loadX = GetRandCoord();
                 loadY = GetRandCoord();
-                */
-
-                if (HttpContext.Request.Form != null)
-                {
-                    loadId = ParseFormRequestInput("loadId");
-                    loadX = ParseFormRequestInput("x");
-                    loadY = ParseFormRequestInput("y");
-                }
 
 
                 returnVal += "{loadId:" + loadId + ",loadX:" + loadX + ",loadY:" + loadY + "}\r";
+                returnVal += ""+psRequestPayloadJson+"\r";
+
+                //string tempRequestPayloadJson = psRequestPayloadJson.Substring(1, psRequestPayloadJson.Length - 2);
+                //returnVal += "" + tempRequestPayloadJson + "\r";
+
+
+                if (!ValidateJson(psRequestPayloadJson))
+                {
+                    loadId = -999;
+                    loadX = -999;
+                    loadY = -999;
+                }
+                else
+                {
+                    // Convert raw text Json into List of Robot objects
+                    tempJsonObj = JsonConvert.DeserializeObject<List<RequestPayload>>(psRequestPayloadJson);
+
+                    foreach (var e in tempJsonObj)
+                    {
+
+                        // Set up a single instance of the RobotClientResponse Struct.
+                        var tempPayload = new RequestPayload();
+
+                        // Populate from the Robots List current item
+                        tempPayload.LoadId = e.LoadId;
+                        tempPayload.X = e.X;
+                        tempPayload.Y = e.Y;
+
+
+                        loadId = Convert.ToInt32(tempPayload.LoadId.ToString());
+                        loadX = Convert.ToInt32(tempPayload.X.ToString());
+                        loadY = Convert.ToInt32(tempPayload.Y.ToString());
+                    }
+
+                }
+
             }
             else
             {
                 // Parse and Validate the client request input.
+
+                if (!ValidateJson(psRequestPayloadJson))
+                {
+                    loadId = -999;
+                    loadX = -999;
+                    loadY = -999;
+                }
+                else
+                {
+                    // Convert raw text Json into List of Robot objects
+                    tempJsonObj = JsonConvert.DeserializeObject<List<RequestPayload>>(psRequestPayloadJson);
+
+                    foreach (var e in tempJsonObj)
+                    {
+
+                        // Set up a single instance of the RobotClientResponse Struct.
+                        var tempPayload = new RequestPayload();
+
+                        // Populate from the Robots List current item
+                        tempPayload.LoadId = e.LoadId;
+                        tempPayload.X = e.X;
+                        tempPayload.Y = e.Y;
+
+                        loadId = Convert.ToInt32(tempPayload.LoadId.ToString());
+                        loadX = Convert.ToInt32(tempPayload.X.ToString());
+                        loadY = Convert.ToInt32(tempPayload.Y.ToString());
+                    }
+
+                }
+
+                
+
+                /*
                 loadId = ParseFormRequestInput("loadId");
                 loadX = ParseFormRequestInput("x");
                 loadY = ParseFormRequestInput("y");
-
+                */
             }
 
             //------------------------------------------------------------
@@ -409,19 +478,68 @@ namespace BotRequestHelper
         */
 
         //==================================================
-        // Do the Work With A POST Request
+        // Do the Work With An Async POST Request
         //==================================================
+
 
         // POST: /<controller>/
         [HttpPost]
-        public IActionResult Post()
+        public async Task<IActionResult> PostAsync()
         {
+            string returnVal = "";
+            string jsonBodyReader = "";
+
+            /*
+            returnVal += "\r";
+            returnVal += "HttpContext.Request: " + HttpContext.Request +"\r";
+            returnVal += "HttpContext.Request.ContentType: " + HttpContext.Request.ContentType + "\r";
+            returnVal += "HttpContext.Request: " + HttpContext.Request.Body + "\r";
+            */
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                jsonBodyReader = await reader.ReadToEndAsync();
+                //returnVal += "StreamReader: " + jsonBodyReader;
+            }
+
+            //string jsonBodyReader = await new StreamReader(Request.Body).ReadToEndAsync();
+
+            //Stream req = Request.Body;
+            //req.Seek(0, System.IO.SeekOrigin.Begin);
+            //string jsonBodyReader = await new StreamReader(req).ReadToEnd();
+
+            /*
+            using (var reader = new StreamReader(Request.Body))
+            {
+                var tempBodyReader = reader.ReadToEnd().ToString();
+
+                jsonBodyReader = tempBodyReader;
+            }
+            
+
+            if (!ValidateJson(jsonBodyReader))
+            {
+                if (debugFlag == 1)
+                {
+                    returnVal += " ERROR INVALID JSON!\r" + jsonBodyReader;
+                }
+                else
+                {
+                    returnVal = "[" + FormatResponse(-999, -999, -999) + "]";
+                }
+            }
+            else
+            {
+                returnVal += "\r=VALID JSON=\r" + jsonBodyReader;
+            }
+            */
 
             // Call the Class Main and Return collection request to the client.
-            return Ok("" + HelpRobots() + "");
+            return Ok("" + HelpRobots(jsonBodyReader) + "" + returnVal);
 
             // End Of Line.
         }
+
     }
 
 }
