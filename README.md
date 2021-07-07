@@ -31,17 +31,35 @@ The following primary tools were used for the development and testing of the API
 
 ### Instructions for running and testing the API
 
+This installation walkthrough assumes that the user is familiar with Git, Github, Visual Studio, Postman and Chrome and that the local workstation has an active internet connection.
 
+1. Ensure that MS Visual Studio is downloaded, installed, and updated on the local workstation. 
+2. Ensure that Postman client software is downloaded, installed, and updated on the local workstation.
+3. Ensure that Google Chrome Canary is downloaded, installed and updated on the local workstation.
+4. Pull from the “master” branch of the Github repo and add the contents of the project to the local hard drive.
+5. Open the project solution in MS Visual Studio.
+
+Testing the API is performed with Postman client on the local workstation where Visual Studio is currently open. 
+
+1. At the top of the Visual Studio interface, make sure that “Google Chrome Canary” is selected as the target web browser where the application will open.
+2. From the “Run” menu item at the top of the Visual Studio client, select the option “Run Without Debugging” from the dropdown menu. 
+3. Visual Studio will run the application and open Canary with a “This page isn’t working” error. This is normal and expected. 
+4. In the address bar at the top of the Canary web browser window, copy the address which should be “http://127.0.0.1:50000/api/brhController”
+5. Now, open the Postman client application. 
+6. Under the Workspaces menu option at the top of the Postman client, select the “+New Workspace” option from the dropdown menu.
+7. Name the new workspace “BotRequestHelper”, under “Visibility” select the option for “Personal”, and finally click the button to “Create Workspace”.
+8. In the new Postman Workspace page, click the small “+” icon next the the Collections tab on the left side of the screen. This will create a new item called ”New Collection”.
+9. Click the ellipsis (three dots) icon next to the words “New Collection”. From the Dropdown select “Add Request”. 
+10. Click on the “GET New Request” item.
+11. On the main part of the Postman screen, past the web address from Canary into the “Enter request URL” bar.
+12. In the dropdown menu to the left of the address bar where it reads “GET”, click the dropdown and select the “POST” option.
+13. Under the address bar, click on the menu option for “Body”.
+14. Under that menu bar, click on the option for “raw” and change the dropdown from “Text” to “JSON”.
+
+The testing environment should now be configured and ready for testing. Using Postman local client, copy the following JSON strings into the Body>raw(JSON) text area, then click the "Send" button next to the address bar.
 
 #### Testing basic functinality
-
-Testing the API is performed with Postman local client on the local workstation where Visual Studio is currently open. 
-
-At the top of the Visual Studio interface. 
-
-with the API project solution open and running without debugging.
-
-
+This tests the basic functionality of the API.
 
 **Input:**
 
@@ -108,3 +126,5 @@ The GitHub repo can be found here:
     *   **Done.**   
 
 ## <a name="req05"></a> Have fun! We're interested in seeing how you approach the challenge and how you solve problems with code.
+
+Thanks for your attention and I hope you like my work.
