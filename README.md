@@ -24,9 +24,13 @@ API to help manage bot location, distance and pickups.
 
 ## .NET Core API with a POST endpoint that accepts and returns data per the above task description.
 
-The API code has been configured based on the provided specs for input, processing and output.
+The API code has been configured based on the provided specs for input, processing and output. The package uses a combination of the Newtonsoft and .NET Core includes to handle JSON API work. Since I haven't had the chance to work directly on the development of an API, the implementation was relatively new ground for me, in particular the handling of POST input in a raw JSON format. Originally, the API was written under the assumption that POST FORM parameters would be passed from the client request, however, after further clarification this was corrected and now accepts JSON from the body of the client request.
 
-The deliverable package contain the following files:
+One the request has been made, the API will made a request to the external list of available robots to get the latest available list of information. This is enumerated into a local List object and compared with the payload coordinate information provided by the user request. Some error checking and event handling is involved at this stage.
+
+Finally, when the best available robot is found (based on distance and battery level), the response is formatted back into a validated JSON and returned to the requesting client. In the event that an error was detected, the API will attempt to return a graceful error code formatted into the correect JSON with the value "-999" in place of the other values as follows:
+
+      [{"robotId":"-999","distanceToGoal":"-999","batteryLevel":"-999"]
 
 
 ## API can be run locally and tested using Postman or other similar tools.
