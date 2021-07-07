@@ -10,17 +10,7 @@ API to help manage bot location, distance and pickups.
 *   [*Use git and GitHub for version control.*](#req04)
 *   [*Have fun! We're interested in seeing how you approach the challenge and how you solve problems with code. The goal is for you to be successful, so if you have any questions or something doesn't seem clear don't hesitate to ask. Asking questions and seeking clarification isn't a negative indicator about your skills - it shows you care and that you want to do well. Asking questions is always encouraged at SVT Robotics, and our hiring process is no different.*](#req05)
 
-## Deliverables Checklist
-*   *API written in .NET Core.*
-    *   **Done and tested.**   
-*   *API accepts POST and returns data per above requirements.*
-    *   **Done and tested.**      
-*   *Repo README has instructions for running and testing the API.*
-    *   **Done.**      
-*   *Repo README has information about what you'd do next, per above requirements.*
-    *   **Done.**      
-*   *Create a new GitHub repo and share it.*
-    *   **Done.**    
+ 
 
 ## <a name="req01"></a>.NET Core API with a POST endpoint that accepts and returns data per the above task description.
 
@@ -35,14 +25,23 @@ Finally, when the best available robot is found (based on distance and battery l
 ## <a name="req02"></a> API can be run locally and tested using Postman or other similar tools.
 
 The following primary tools were used for the development and testing of the API. This is the primary and recommended configuration for verification testing.
-* Developed in Visual Studio Community Edition for Mac Version 8.10.4 (build 11)
-* Tested using Postman Version 8.7.0 (8.7.0). 
-* Google Chrome Canary Version 93.0.4568.0 (Official Build) canary (x86_64)
+* Developed in Visual Studio Community Edition for Mac Version 8.10.4 (build 11) [Visual Studio Website](https://visualstudio.microsoft.com/downloads/)
+* Tested using Postman Version 8.7.0 (8.7.0) [Postman Website](https://www.postman.com/downloads/)
+* Google Chrome Canary Version 93.0.4568.0 (Official Build) canary (x86_64) [Canary Website](https://www.google.com/chrome/canary/)
 
 ### Instructions for running and testing the API
 
 
+
 #### Testing basic functinality
+
+Testing the API is performed with Postman local client on the local workstation where Visual Studio is currently open. 
+
+At the top of the Visual Studio interface. 
+
+with the API project solution open and running without debugging.
+
+
 
 **Input:**
 
@@ -92,4 +91,20 @@ However, Robot #88 has the highest battery level, so, the id for that rebot is r
 
 
 ## <a name="req04"></a> Use git and GitHub for version control.
+
+The GitHub repo can be found here:
+[https://github.com/TheControllerCat/BotRequestHelper](https://github.com/TheControllerCat/BotRequestHelper)
+
+### Deliverables Checklist
+*   *API written in .NET Core.*
+    *   **Done and tested.**   
+*   *API accepts POST and returns data per above requirements.*
+    *   **Done and tested.**      
+*   *Repo README has instructions for running and testing the API.*
+    *   **Done.**      
+*   *Repo README has information about what you'd do next, per above requirements.*
+    *   **Done.**      
+*   *Create a new GitHub repo and share it.*
+    *   **Done.**   
+
 ## <a name="req05"></a> Have fun! We're interested in seeing how you approach the challenge and how you solve problems with code.
